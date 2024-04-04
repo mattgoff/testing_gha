@@ -1,10 +1,13 @@
 name: Label Tester
 
-on: [push, pull_request]
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['*']
 
 permissions:
   contents: read
-
 
 jobs:
   validation:
@@ -12,7 +15,7 @@ jobs:
     steps:
 
     - name: Fork Check
-      id: check_owner
+      id: fork_check
       run: |
         if [ "${{ github.event.pull_request.head.repo.fork }}" = "true" ]; then
           echo "This is a Fork, skipping build as we may not have access to the remote.  Applying Review Required Flag."
@@ -21,19 +24,23 @@ jobs:
           echo "::set-output name=skip::false"
         fi
 
+    - name: Echo Fork Check
+      run: | 
+        echo "ForkCheck=${github.event.pull_request.head.repo.fork}"
+
     - name: Extract branch name
-      if: steps.check_owner.outputs.skip == 'false'
+      if: steps.fork_check.outputs.skip == 'false'
       id: extract_branch
       run: | 
         echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
 
     - name: Current Branch
-      if: steps.check_owner.outputs.skip == 'false'
+      if: steps.fork_check.outputs.skip == 'false'
       run: echo "Current Branch of Repo = ${{ steps.extract_branch.outputs.branch }}"
 
     - name: Set PR label
       uses: actions/github-script@v7
-      if: ${{ 'true' == 'false' }} or ${{ steps.check_owner.outputs.skip == 'true' }}
+      if: ${{ steps.fork_check.outputs.skip == 'true' }}
       with:
         github-token: ${{ secrets.gh_fgt }}
         script: |
@@ -41,5 +48,5 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            labels: ['netauto review needed']
+            labels: ['review needed']
           })
