@@ -26,7 +26,7 @@ jobs:
 
     - name: Echo Fork Check
       run: | 
-        echo "ForkCheck=${github.event.pull_request.head.repo.fork}"
+        echo "ForkCheck=${{ github.event.pull_request.head.repo.fork }}"
 
     - name: Extract branch name
       if: steps.fork_check.outputs.skip == 'false'
