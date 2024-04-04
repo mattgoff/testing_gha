@@ -19,9 +19,9 @@ jobs:
       run: |
         if [ "${{ github.event.pull_request.head.repo.fork }}" = "true" ]; then
           echo "This is a Fork, skipping build as we may not have access to the remote.  Applying Review Required Flag."
-          echo "::set-output name=skip::true"
+          echo "skip=true" >> $GITHUB_OUTPUT
         else
-          echo "::set-output name=skip::false"
+          echo "skip=false"  >> $GITHUB_OUTPUT
         fi
 
     - name: Echo Fork Check
@@ -29,13 +29,13 @@ jobs:
         echo "ForkCheck=${{ github.event.pull_request.head.repo.fork }}"
 
     - name: Extract branch name
-      if: steps.fork_check.outputs.skip == 'false'
+      if: ${{ steps.fork_check.outputs.skip == 'false' }}
       id: extract_branch
       run: | 
         echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
 
     - name: Current Branch
-      if: steps.fork_check.outputs.skip == 'false'
+      if: ${{ steps.fork_check.outputs.skip == 'false' }}
       run: echo "Current Branch of Repo = ${{ steps.extract_branch.outputs.branch }}"
 
     - name: Set PR label
